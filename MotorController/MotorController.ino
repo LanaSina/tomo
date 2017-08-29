@@ -17,10 +17,14 @@ Development environment specifics:
 Developed on Arduino 1.6.4
 Developed with ROB-9457
 ******************************************************************************/
+//ref https://learn.sparkfun.com/tutorials/xbee-shield-hookup-guide/example-communication-test
+
 
 // This is the library for the TB6612 that contains the class Motor and all the
 // functions
 #include <SparkFun_TB6612.h>
+#include <SoftwareSerial.h>
+SoftwareSerial XBee(2, 3); // RX, TX
 
 // Pins for all inputs, keep in mind the PWM defines must be on PWM pins
 // the default pins listed are the ones used on the Redbot (ROB-12097) with
@@ -45,13 +49,37 @@ const int offsetB = -1;
 Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY);
 Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY);
 
+
+//from xbee
+String Data = "";
+
 void setup(){
   Serial.begin(9600);
   Serial.println("Hello, world");
+  // Set up both ports at 9600 baud. This value is most important
+  // for the XBee. Make sure the baud rate matches the config
+  // setting of your XBee.
+  XBee.begin(9600);
 }
 
 
 void loop(){
+
+  //receive command from XBee
+  if (XBee.available()){ 
+    
+    char character = XBee.read(); // Receive a single character from the software serial port
+        Data.concat(character); // Add the received character to the receive buffer
+        if (character == '\n'){
+            Serial.print("Received: ");
+            Serial.println(Data);
+
+            //parse
+
+            // Clear receive buffer so we're ready to receive the next line
+            Data = "";
+        }
+  }
   
   Serial.println("Hi");
 delay(10000);
