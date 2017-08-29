@@ -51,7 +51,7 @@ Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY);
 
 
 //from xbee
-String Data = "";
+String data = "";
 
 void setup(){
   Serial.begin(9600);
@@ -69,56 +69,57 @@ void loop(){
   if (XBee.available()){ 
     
     char character = XBee.read(); // Receive a single character from the software serial port
-        Data.concat(character); // Add the received character to the receive buffer
+        data.concat(character); // Add the received character to the receive buffer
         if (character == '\n'){
             Serial.print("Received: ");
-            Serial.println(Data);
+            Serial.println(data);
 
             //parse
+            parseCommand(data);
 
             // Clear receive buffer so we're ready to receive the next line
-            Data = "";
+            data = "";
         }
   }
   
-  Serial.println("Hi");
-delay(10000);
-
-  forward(motor1, motor2, -255);
-      delay(5000);
-/*brake(motor1, motor2);
-delay(2000);
-left(motor1, motor2, 100);
-delay(2000);
-forward(motor1, motor2, 255);
-      delay(3000);
-      brake(motor1, motor2);
-      delay(2000);
-right(motor1, motor2, 100);
-delay(2000);*/
-      
-  /*backNForth(255,3000);
-  backNForth(255,7000);
-  backNForth(255,13000);?*/
-
-
-   /*backNForth(100,1000);
-   backNForth(100,3000);
-   backNForth(100,7000);
-   backNForth(100,13000);*/
+delay(200);
 }
 
-/** goes forward, brake, wait, goes backwards*/
-void backNForth(int speed, int time){
-   //Use of the drive function which takes as arguements the speed
-   //and optional duration.  A negative speed will cause it to go
-   //backwards.  Speed can be from -255 to 255.  Also use of the 
-   //brake function which takes no arguements.
-   motor1.drive(speed,time);
-   motor1.brake();
-   delay(3000);
-   motor1.drive(-speed,time);
-   motor1.brake();
-   delay(3000);
+
+//https://arduino.stackexchange.com/questions/1013/how-do-i-split-an-incoming-string
+//format: motor_id, speed
+//motorname = right, left, both
+void parseCommand(String xdata){
+  int motor_id = getValue(xdata, ',', 0).toInt();
+  int speed = getValue(xdata, ',', 1).toInt();
+  switch (motor_id) {
+    case 0:{
+      motor1.drive(speed);
+      break;
+    }
+    case 1:{
+      motor2.drive(speed);
+      break;
+    }
+    case -1:{
+     forward(motor1, motor2, speed);
+      break;
+    }
+  }
 }
 
+
+String getValue(String data, char separator, int index){
+    int found = 0;
+    int strIndex[] = { 0, -1 };
+    int maxIndex = data.length() - 1;
+
+    for (int i = 0; i <= maxIndex && found <= index; i++) {
+        if (data.charAt(i) == separator || i == maxIndex) {
+            found++;
+            strIndex[0] = strIndex[1] + 1;
+            strIndex[1] = (i == maxIndex) ? i+1 : i;
+        }
+    }
+    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
