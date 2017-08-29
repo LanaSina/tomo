@@ -49,7 +49,8 @@ const int offsetB = -1;
 Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY);
 Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY);
 
-
+int current_motor = 2;
+int current_speed = 100;
 //from xbee
 String data = "";
 
@@ -66,7 +67,7 @@ void setup(){
 void loop(){
 
   //receive command from XBee
-  if (XBee.available()){ 
+  /*if (XBee.available()){ 
     
     char character = XBee.read(); // Receive a single character from the software serial port
         data.concat(character); // Add the received character to the receive buffer
@@ -81,8 +82,40 @@ void loop(){
             data = "";
         }
   }
+
+  move();*/
   
-delay(200);
+  motor1.drive(100,1000);
+  
+delay(1000);
+}
+
+void move(){
+   /*switch (current_motor) {
+    case 1:{
+      motor2.drive(current_speed);
+    }
+    break;
+    case 2:{
+      motor1.drive(current_speed);
+    }
+    break;
+    case -1:{
+      motor1.drive(current_speed);
+      motor2.drive(current_speed);
+     //forward(motor1, motor2, speed);
+    }
+    break;
+  }*/
+
+  if(current_motor==1){
+    motor1.drive(current_speed);
+  }else if(current_motor==2){
+    motor2.drive(current_speed);
+  }else if(current_motor==-1){
+    motor1.drive(current_speed);
+    motor2.drive(current_speed);
+  }
 }
 
 
@@ -90,22 +123,14 @@ delay(200);
 //format: motor_id, speed
 //motorname = right, left, both
 void parseCommand(String xdata){
-  int motor_id = getValue(xdata, ',', 0).toInt();
-  int speed = getValue(xdata, ',', 1).toInt();
-  switch (motor_id) {
-    case 0:{
-      motor1.drive(speed);
-      break;
-    }
-    case 1:{
-      motor2.drive(speed);
-      break;
-    }
-    case -1:{
-     forward(motor1, motor2, speed);
-      break;
-    }
-  }
+  current_motor = getValue(xdata, ',', 0).toInt();
+  current_speed = getValue(xdata, ',', 1).toInt();
+
+   Serial.print("motor ");
+   Serial.print(current_motor);
+   Serial.print(" speed ");
+   Serial.print(current_speed);
+   Serial.print("\n");
 }
 
 
