@@ -16,8 +16,10 @@
 // Original library: https://www.github.com/lowpowerlab/rfm69
 // SparkFun repository: https://github.com/sparkfun/RFM69HCW_Breakout
 
-// Include the RFM69 and SPI libraries:
 
+//https://learn.sparkfun.com/tutorials/rfm69hcw-hookup-guide
+
+// Include the RFM69 and SPI libraries:
 #include <RFM69.h>
 #include <SPI.h>
 
@@ -79,66 +81,7 @@ void setup()
 
 void loop()
 {
-  // Set up a "buffer" for characters that we'll send:
-
-  static char sendbuffer[62];
-  static int sendlength = 0;
-
-  // SENDING
-
-  // In this section, we'll gather serial characters and
-  // send them to the other node if we (1) get a carriage return,
-  // or (2) the buffer is full (61 characters).
-
-  // If there is any serial input, add it to the buffer:
-
-  if (Serial.available() > 0)
-  {
-    char input = Serial.read();
-
-    if (input != '\r') // not a carriage return
-    {
-      sendbuffer[sendlength] = input;
-      sendlength++;
-    }
-
-    // If the input is a carriage return, or the buffer is full:
-
-    if ((input == '\r') || (sendlength == 61)) // CR or buffer full
-    {
-      // Send the packet!
-
-
-      Serial.print("sending to node ");
-      Serial.print(TONODEID, DEC);
-      Serial.print(", message [");
-      for (byte i = 0; i < sendlength; i++)
-        Serial.print(sendbuffer[i]);
-      Serial.println("]");
-
-      // There are two ways to send packets. If you want
-      // acknowledgements, use sendWithRetry():
-
-      if (USEACK)
-      {
-        if (radio.sendWithRetry(TONODEID, sendbuffer, sendlength))
-          Serial.println("ACK received!");
-        else
-          Serial.println("no ACK received");
-      }
-
-      // If you don't need acknowledgements, just use send():
-
-      else // don't use ACK
-      {
-        radio.send(TONODEID, sendbuffer, sendlength);
-      }
-
-      sendlength = 0; // reset the packet
-      Blink(LED,10);
-    }
-  }
-
+  
   // RECEIVING
 
   // In this section, we'll check with the RFM69HCW to see
@@ -173,6 +116,9 @@ void loop()
       Serial.println("ACK sent");
     }
     Blink(LED,10);
+
+
+    //now use RSSI to 
   }
 }
 

@@ -81,7 +81,7 @@ void loop()
 {
   // Set up a "buffer" for characters that we'll send:
 
-  static char sendbuffer[62];
+  /*static char sendbuffer[62];
   static int sendlength = 0;
 
   // SENDING
@@ -137,8 +137,23 @@ void loop()
       sendlength = 0; // reset the packet
       Blink(LED,10);
     }
-  }
+  }*/
 
+  //send default message
+  // Define 
+  String str = "message from radio 1"; 
+  // Length (with one extra character for the null terminator)
+  int str_len = str.length() + 1; 
+  // Prepare the character array (the buffer) 
+  char char_array[str_len];
+  // Copy it over 
+  str.toCharArray(char_array, str_len);
+  
+  Serial.println(str);
+  radio.send(TONODEID, char_array, str_len);
+  Blink(LED,10);
+  delay(3000);
+  
   // RECEIVING
 
   // In this section, we'll check with the RFM69HCW to see
