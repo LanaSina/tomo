@@ -16,18 +16,16 @@
 // Original library: https://www.github.com/lowpowerlab/rfm69
 // SparkFun repository: https://github.com/sparkfun/RFM69HCW_Breakout
 
-
-//https://learn.sparkfun.com/tutorials/rfm69hcw-hookup-guide
-
 // Include the RFM69 and SPI libraries:
+
 #include <RFM69.h>
 #include <SPI.h>
 
 // Addresses for this node. CHANGE THESE FOR EACH NODE!
 
 #define NETWORKID     0   // Must be the same for all nodes
-#define MYNODEID      2   // My node ID
-#define TONODEID      1   // Destination node ID
+#define MYNODEID      1   // My node ID
+#define TONODEID      2   // Destination node ID
 
 // RFM69 frequency, uncomment the frequency of your module:
 
@@ -41,7 +39,7 @@
 
 // Use ACKnowledge when sending messages (or not):
 
-#define USEACK        false // Request ACKs or not
+#define USEACK        true // Request ACKs or not
 
 // Packet sent/received indicator LED (optional):
 
@@ -51,7 +49,6 @@
 // Create a library object for our RFM69HCW module:
 
 RFM69 radio;
-int prev_rssi = -1000;
 
 void setup()
 {
@@ -78,26 +75,69 @@ void setup()
 
   if (ENCRYPT)
     radio.encrypt(ENCRYPTKEY);
-
-
-     //send default message
-  // Define 
-  String str = "message from radio 2"; 
-  // Length (with one extra character for the null terminator)
-  int str_len = str.length() + 1; 
-  // Prepare the character array (the buffer) 
-  char char_array[str_len];
-  // Copy it over 
-  str.toCharArray(char_array, str_len);
-  
-  Serial.println(str);
-  radio.send(TONODEID, char_array, str_len);
-  Blink(LED,10);
 }
 
 void loop()
 {
- 
+  // Set up a "buffer" for characters that we'll send:
+
+  static char sendbuffer[62];
+  static int sendlength = 0;
+
+  // SENDING
+
+  // In this section, we'll gather serial characters and
+  // send them to the other node if we (1) get a carriage return,
+  // or (2) the buffer is full (61 characters).
+
+  // If there is any serial input, add it to the buffer:
+
+  if (Serial.available() > 0)
+  {
+    char input = Serial.read();
+
+    if (input != '\r') // not a carriage return
+    {
+      sendbuffer[sendlength] = input;
+      sendlength++;
+    }
+
+    // If the input is a carriage return, or the buffer is full:
+
+    if ((input == '\r') || (sendlength == 61)) // CR or buffer full
+    {
+      // Send the packet!
+
+
+      Serial.print("sending to node ");
+      Serial.print(TONODEID, DEC);
+      Serial.print(", message [");
+      for (byte i = 0; i < sendlength; i++)
+        Serial.print(sendbuffer[i]);
+      Serial.println("]");
+
+      // There are two ways to send packets. If you want
+      // acknowledgements, use sendWithRetry():
+
+      if (USEACK)
+      {
+        if (radio.sendWithRetry(TONODEID, sendbuffer, sendlength))
+          Serial.println("ACK received!");
+        else
+          Serial.println("no ACK received");
+      }
+
+      // If you don't need acknowledgements, just use send():
+
+      else // don't use ACK
+      {
+        radio.send(TONODEID, sendbuffer, sendlength);
+      }
+
+      sendlength = 0; // reset the packet
+      Blink(LED,10);
+    }
+  }
 
   // RECEIVING
 
@@ -122,7 +162,6 @@ void loop()
     // smaller numbers mean higher power.
 
     Serial.print("], RSSI ");
-    int cur_rssi = radio.RSSI;
     Serial.println(radio.RSSI);
 
     // Send an ACK if requested.
@@ -134,20 +173,6 @@ void loop()
       Serial.println("ACK sent");
     }
     Blink(LED,10);
-
-
-    //now use RSSI to estimate optimal motion
-    if(cur_rssi>20){
-      //do nothing, or test directivity
-    } else {
-      if(cur_rssi<prev_rssi){
-        //go back
-        Serial.println("Go back!");
-      } else {
-        //go forward
-        Serial.println("Go forward!");
-      }
-    }
   }
 }
 

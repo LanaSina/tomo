@@ -152,7 +152,7 @@ void loop()
   Serial.println(str);
   radio.send(TONODEID, char_array, str_len);
   Blink(LED,10);
-  delay(3000);
+
   
   // RECEIVING
 
@@ -189,6 +189,8 @@ void loop()
     }
     Blink(LED,10);
   }
+
+    delay(3000);
 }
 
 void Blink(byte PIN, int DELAY_MS)
